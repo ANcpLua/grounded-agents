@@ -1,0 +1,16 @@
+{
+  // Markdown rules for this repository. Defaults apply unless listed here.
+  // https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+  // MD013 line-length: prose wraps at 120; tables, code blocks and headings are exempt
+  // because their content is dictated by the sample, not by the formatter.
+  "MD013": {
+    "line_length": 120,
+    "tables": false,
+    "code_blocks": false,
+    "headings": false
+  },
+
+  // MD024 no-duplicate-heading: repeated section names are fine under different parents.
+  "MD024": { "siblings_only": true }
+}

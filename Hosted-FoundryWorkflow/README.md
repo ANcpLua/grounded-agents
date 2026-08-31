@@ -15,7 +15,7 @@ CustomerQuery
 ## The invariants
 
 | Illegal state | Why it cannot be represented |
-|---|---|
+| --- | --- |
 | Reading text out of a response with pending approvals | `SettledResponse` has no public constructor; the only producers are `Settlement.Classify` (which refuses while approvals are pending) and the `ApprovalPolicy.SettleAsync` loop that drives every request to a recorded decision. |
 | A "grounded" answer without retrieval proof | `Grounded<T>` is only produced by `Grounding.Require`, which demands that the tool-call evidence satisfies the stage's `ToolRequirement`; its constructor rejects empty evidence. |
 | Consolidating unproven claims | `ConsolidateAsync(Grounded<ProductAdvice>, Grounded<InventoryFacts>)` — the signature is the invariant. There is no overload taking raw strings. |
@@ -33,12 +33,13 @@ new Grounded<ProductAdvice>(advice, [], settled);            // throws (ctor is 
 
 ## Observability
 
-`WorkflowTelemetry` exports OpenTelemetry traces for the workflow spans
-(`retail-ops.workflow` -> `product-expert` / `inventory-analyst` / `consolidator`) plus the
-Agent Framework and Azure SDK activity sources. Each stage span carries the boundary facts:
-the evidence tool list, approval totals, per-decision events, and a grounded/ungrounded/failed
-verdict. With `APPLICATIONINSIGHTS_CONNECTION_STRING` set, traces go to Application Insights;
-without it they print to the console so runs are inspectable offline.
+`WorkflowTelemetry` publishes the `RetailOpsWorkflow` activity source and exports the workflow
+spans (`retail-ops.workflow` -> `retail-ops.product-expert` / `retail-ops.inventory-analyst` /
+`retail-ops.consolidator`) plus the Agent Framework and Azure SDK activity sources. Each stage
+span carries the boundary facts: the evidence tool list, approval totals, per-decision events,
+and a grounded/ungrounded/failed verdict. With `APPLICATIONINSIGHTS_CONNECTION_STRING` set,
+traces go to Application Insights through the Azure Monitor exporter; without it they print to
+the console so runs are inspectable offline.
 
 ## Run
 
@@ -65,14 +66,29 @@ stage stops the pipeline with exit `1` and an error span.
 dotnet run -- selftest
 ```
 
-Offline and credential-free: every boundary guard is driven into its illegal state and must
-reject it — empty configuration, evidence-free grounding, partial tool evidence, unlisted MCP
-servers, and pending approvals that must refuse to settle.
+Offline and credential-free: 14 checks drive every boundary guard into its illegal state and
+require it to reject — empty configuration, evidence-free grounding, partial tool evidence,
+unlisted MCP servers, and pending approvals that must refuse to settle. The same guards are
+covered by the [test project](../Hosted-FoundryWorkflow.Tests/).
+
+## Evaluation gate
+
+```bash
+dotnet run -- eval
+```
+
+Runs a fail-closed evaluation suite against the two tool-using stage agents. The expectations
+restate the runtime invariants on a dataset: the product-expert gate requires positive tool-call
+evidence (`ToolExpectation.Present`, mirroring `ToolRequirement.AnyMcp`) and the inventory gate
+requires both retrievals (`ToolExpectation.AllOf`, mirroring `ToolRequirement.AllTools`). Setting
+`AI_EVAL_FOUNDRY=1` adds Foundry server-side evaluators (relevance, groundedness, coherence). The
+process exits `0` only when every stage ran and every item passed.
 
 ## Modes
 
 ```text
 dotnet run -- "<question>"   # full workflow (default question when omitted)
 dotnet run -- selftest       # offline boundary-guard proof
+dotnet run -- eval           # evaluation gate over the stage agents
 dotnet run -- --server       # stdio inventory MCP server (spawned internally by the analyst)
 ```
