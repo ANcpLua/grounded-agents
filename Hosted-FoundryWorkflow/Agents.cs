@@ -24,6 +24,12 @@ public sealed record InventoryFacts(string Assessment);
 [ExcludeFromCodeCoverage(Justification = "Requires a live Foundry-managed agent.")]
 public sealed class ProductExpert
 {
+    /// <summary>The stage's approval policy and grounding requirement; the evaluation gate reuses both verbatim.</summary>
+    internal static readonly ApprovalPolicy Policy =
+        ApprovalPolicy.AllowAllMcp("managed agent's only tool is the Foundry IQ knowledge base");
+
+    internal static readonly ToolRequirement Requirement = ToolRequirement.AnyMcp();
+
     private readonly AIAgent _agent;
 
     private ProductExpert(AIAgent agent) => _agent = agent;
@@ -42,14 +48,9 @@ public sealed class ProductExpert
         AgentSession session = await _agent.CreateSessionAsync();
         AgentResponse response = await _agent.RunAsync(query.Text, session);
 
-        SettledResponse settled = await ApprovalPolicy
-            .AllowAllMcp("managed agent's only tool is the Foundry IQ knowledge base")
-            .SettleAsync(_agent, session, response);
+        SettledResponse settled = await Policy.SettleAsync(_agent, session, response);
 
-        return Grounding.Require(
-            settled,
-            ToolRequirement.AnyMcp(),
-            result => new ProductAdvice(query, result.Text));
+        return Grounding.Require(settled, Requirement, result => new ProductAdvice(query, result.Text));
     }
 }
 
@@ -61,7 +62,11 @@ public sealed class ProductExpert
 [ExcludeFromCodeCoverage(Justification = "Requires a live model deployment and a spawned stdio MCP server.")]
 public sealed class InventoryAnalyst : IAsyncDisposable
 {
-    private static readonly ToolRequirement Requirement =
+    /// <summary>The stage's approval policy and grounding requirement; the evaluation gate reuses both verbatim.</summary>
+    internal static readonly ApprovalPolicy Policy =
+        ApprovalPolicy.DenyAll("local MCP function tools execute directly; approval requests are unexpected here");
+
+    internal static readonly ToolRequirement Requirement =
         ToolRequirement.AllTools("get_inventory_levels", "get_weekly_sales");
 
     private readonly AIAgent _agent;
@@ -119,9 +124,7 @@ public sealed class InventoryAnalyst : IAsyncDisposable
              """,
             session);
 
-        SettledResponse settled = await ApprovalPolicy
-            .DenyAll("local MCP function tools execute directly; approval requests are unexpected here")
-            .SettleAsync(_agent, session, response);
+        SettledResponse settled = await Policy.SettleAsync(_agent, session, response);
 
         return Grounding.Require(settled, Requirement, result => new InventoryFacts(result.Text));
     }

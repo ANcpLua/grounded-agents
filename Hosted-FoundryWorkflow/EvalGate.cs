@@ -9,12 +9,11 @@ using Microsoft.Agents.AI.Foundry;
 namespace HostedFoundryWorkflow;
 
 /// <summary>
-/// The fail-closed evaluation gate over the workflow's stage agents. The suite expectations
-/// are the same invariants the runtime boundary enforces: the inventory gate's
-/// <c>ToolExpectation.AllOf</c> is literally the <see cref="InventoryAnalyst"/>'s
-/// <c>ToolRequirement.AllTools</c>, and the product-expert gate demands positive tool-call
-/// evidence just like <c>ToolRequirement.AnyMcp</c>. What the types prevent at runtime,
-/// the gate proves on a dataset — non-zero exit unless every stage ran and passed.
+/// The fail-closed evaluation gate over the workflow's stage agents. Each agent runs inside a
+/// <see cref="SettledAgent"/> under its stage's own <see cref="ApprovalPolicy"/>, and each suite's
+/// expectation is the stage's own <see cref="ToolRequirement"/> — not a restatement of it — scored
+/// over the settled transcript by <see cref="RequirementChecks"/>. What the types prevent at
+/// runtime, the gate proves on a dataset — non-zero exit unless every stage ran and passed.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Runs the evaluation suites against live agents.")]
 public static class EvalGate
@@ -28,12 +27,12 @@ public static class EvalGate
 
         EvaluationSuite expertSuite = EvaluationSuite.Create("product-expert-gate")
             .Agent(
-                expert.Agent,
+                new SettledAgent(expert.Agent, ProductExpert.Policy),
                 "What types of tents does Contoso offer?",
                 "Tell me about which backpacks are available in XL.")
             .Check(EvalChecks.NonEmpty())
-            // Mirrors ToolRequirement.AnyMcp: red unless the knowledge tool was really called.
-            .ExpectTools(ToolExpectation.Present());
+            // Red unless the knowledge tool was really called — the stage's own requirement.
+            .Check(RequirementChecks.Satisfies(ProductExpert.Requirement));
 
         if (withFoundry)
         {
@@ -50,12 +49,12 @@ public static class EvalGate
 
         EvaluationSuite analystSuite = EvaluationSuite.Create("inventory-analyst-gate")
             .Agent(
-                analyst.Agent,
+                new SettledAgent(analyst.Agent, InventoryAnalyst.Policy),
                 "Which products should we restock this week?",
                 "Is anything a candidate for clearance?")
             .Check(EvalChecks.NonEmpty())
-            // Mirrors ToolRequirement.AllTools: both retrievals must be positively evidenced.
-            .ExpectTools(ToolExpectation.AllOf("get_inventory_levels", "get_weekly_sales"));
+            // Both retrievals must be positively evidenced — the stage's own requirement.
+            .Check(RequirementChecks.Satisfies(InventoryAnalyst.Requirement));
 
         if (withFoundry)
         {

@@ -43,6 +43,7 @@ public sealed class SettlementTests
         ToolCallEvidence evidence = Assert.Single(settled.Response.Evidence);
         Assert.Equal("search", evidence.Tool);
         Assert.Equal("foundry-iq", evidence.McpServer);
+        Assert.Same(message, Assert.Single(settled.Response.Transcript));
     }
 
     [Fact]

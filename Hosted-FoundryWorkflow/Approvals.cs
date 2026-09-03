@@ -22,16 +22,25 @@ public sealed class SettledResponse
     internal SettledResponse(
         string text,
         IReadOnlyList<ToolCallEvidence> evidence,
-        IReadOnlyList<ApprovalDecision> decisions)
+        IReadOnlyList<ApprovalDecision> decisions,
+        IReadOnlyList<ChatMessage> transcript)
     {
         Text = text;
         Evidence = evidence;
         Decisions = decisions;
+        Transcript = transcript;
     }
 
     public string Text { get; }
     public IReadOnlyList<ToolCallEvidence> Evidence { get; }
     public IReadOnlyList<ApprovalDecision> Decisions { get; }
+
+    /// <summary>
+    /// Every message exchanged from the first response to settlement: each round's agent
+    /// messages and the approval replies sent between them. The evaluation gate scores this,
+    /// so it sees exactly the tool calls and text the workflow saw.
+    /// </summary>
+    public IReadOnlyList<ChatMessage> Transcript { get; }
 }
 
 /// <summary>Closed classification of an agent response: settled, or blocked on approvals.</summary>
@@ -56,7 +65,7 @@ public abstract record Settlement
             return new RequiresApproval(pending);
         }
 
-        return new Settled(new SettledResponse(text, EvidenceOf(contents), decisions));
+        return new Settled(new SettledResponse(text, EvidenceOf(contents), decisions, [.. messages]));
     }
 
     /// <summary>Tool-call evidence carried by a set of contents; MCP calls keep their server name.</summary>
@@ -135,15 +144,18 @@ public abstract record ApprovalPolicy
     {
         List<ToolCallEvidence> evidence = [];
         List<ApprovalDecision> decisions = [];
+        List<ChatMessage> transcript = [];
 
         while (true)
         {
+            transcript.AddRange(response.Messages);
+
             // Only the current round can hold a *pending* request: anything decided in an earlier
             // round is already settled and survives here as evidence, not as a reason to loop again.
             if (Settlement.Classify(response.Text, response.Messages, decisions) is Settlement.Settled settled)
             {
                 return new SettledResponse(
-                    settled.Response.Text, [.. evidence, .. settled.Response.Evidence], decisions);
+                    settled.Response.Text, [.. evidence, .. settled.Response.Evidence], decisions, transcript);
             }
 
             evidence.AddRange(Settlement.EvidenceOf(response.Messages));
@@ -159,6 +171,7 @@ public abstract record ApprovalPolicy
                 approvalResponses.Add(new ChatMessage(ChatRole.User, [request.CreateResponse(decision.Approved)]));
             }
 
+            transcript.AddRange(approvalResponses);
             response = await agent.RunAsync(approvalResponses, session);
         }
     }

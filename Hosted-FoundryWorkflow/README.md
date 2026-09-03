@@ -51,6 +51,8 @@ export AZURE_AI_PROJECT_ENDPOINT="https://<account>.services.ai.azure.com/api/pr
 export AZURE_AI_MODEL_DEPLOYMENT_NAME="gpt-4.1"
 # optional: export AGENT_NAME="product-expert-agent"
 # optional: export APPLICATIONINSIGHTS_CONNECTION_STRING="..."
+# on a developer machine: skip the managed-identity probe, use the CLI login directly
+export AZURE_TOKEN_CREDENTIALS=AzureCliCredential
 az login
 
 dotnet run -- "I need something for dry skin and sun protection. What should I buy, and is it in stock?"
@@ -77,12 +79,20 @@ covered by the [test project](../Hosted-FoundryWorkflow.Tests/).
 dotnet run -- eval
 ```
 
-Runs a fail-closed evaluation suite against the two tool-using stage agents. The expectations
-restate the runtime invariants on a dataset: the product-expert gate requires positive tool-call
-evidence (`ToolExpectation.Present`, mirroring `ToolRequirement.AnyMcp`) and the inventory gate
-requires both retrievals (`ToolExpectation.AllOf`, mirroring `ToolRequirement.AllTools`). Setting
-`AI_EVAL_FOUNDRY=1` adds Foundry server-side evaluators (relevance, groundedness, coherence). The
-process exits `0` only when every stage ran and every item passed.
+Runs a fail-closed evaluation suite against the two tool-using stage agents, and it evaluates
+them the way the workflow runs them:
+
+- Each agent is wrapped in a `SettledAgent`, which drives every response to settlement under the
+  stage's own `ApprovalPolicy` and returns the settled transcript. A managed agent whose knowledge
+  tool requires approval would otherwise answer the gate with nothing but the approval request.
+- Each suite's expectation is the stage's own `ToolRequirement` (`ProductExpert.Requirement`,
+  `InventoryAnalyst.Requirement`), scored over that transcript by `RequirementChecks.Satisfies`.
+  It uses the boundary's evidence extraction, so MCP-server calls such as the Foundry IQ
+  `knowledge_base_retrieve` count; the framework's built-in tool-call checks only see local
+  function calls.
+
+Setting `AI_EVAL_FOUNDRY=1` adds Foundry server-side evaluators (relevance, groundedness,
+coherence). The process exits `0` only when every stage ran and every item passed.
 
 ## Modes
 
@@ -92,3 +102,12 @@ dotnet run -- selftest       # offline boundary-guard proof
 dotnet run -- eval           # evaluation gate over the stage agents
 dotnet run -- --server       # stdio inventory MCP server (spawned internally by the analyst)
 ```
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `managed_identity_all_sources_unavailable`, process aborts after about 75 s | `DefaultAzureCredential` probed the instance metadata endpoint and treated the timeout as a failure instead of falling through to the CLI. Set `AZURE_TOKEN_CREDENTIALS=AzureCliCredential`. |
+| `HTTP 429 rate_limit_exceeded` during `eval` | The gate runs four agent turns plus the workflow's tool rounds in quick succession. Raise the chat deployment's tokens-per-minute capacity or wait a minute. |
+| `Workflow stopped at product-expert` | The stage's evidence has no MCP-server call. Check that the agent has the knowledge base attached as an MCP tool; the span's `workflow.evidence.tools` tag lists what was actually called. |
+| `Workflow stopped at inventory-analyst` | The model called only one of the two inventory tools. That is the gate working as designed; tune the instructions in `Agents.cs` and rerun `eval`. |

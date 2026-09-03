@@ -8,7 +8,7 @@ public sealed class GroundingTests
     private sealed record UnknownRequirement : ToolRequirement;
 
     private static SettledResponse Settled(params ToolCallEvidence[] evidence) =>
-        new("the answer", evidence, []);
+        new("the answer", evidence, [], []);
 
     [Fact]
     public void Require_RequirementOutsideTheUnion_Throws()
@@ -17,6 +17,30 @@ public sealed class GroundingTests
             () => Grounding.Require(Settled(), new UnknownRequirement(), settled => settled.Text));
 
         Assert.Equal("Unreachable: ToolRequirement union is closed.", error.Message);
+    }
+
+    [Fact]
+    public void Describe_NamesEveryCase()
+    {
+        Assert.Equal(
+            "all of get_inventory_levels, get_weekly_sales",
+            ToolRequirement.AllTools("get_inventory_levels", "get_weekly_sales").Describe());
+        Assert.Equal("any MCP-server call", ToolRequirement.AnyMcp().Describe());
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(
+            () => new UnknownRequirement().Describe());
+        Assert.Equal("Unreachable: ToolRequirement union is closed.", error.Message);
+    }
+
+    [Fact]
+    public void IsSatisfiedBy_IsTheSameRuleRequireUses()
+    {
+        ToolCallEvidence[] evidence = [new("search", "foundry-iq"), new("get_inventory_levels", null)];
+
+        Assert.True(ToolRequirement.AnyMcp().IsSatisfiedBy(evidence));
+        Assert.True(ToolRequirement.AllTools("GET_INVENTORY_LEVELS").IsSatisfiedBy(evidence));
+        Assert.False(ToolRequirement.AllTools("get_inventory_levels", "get_weekly_sales").IsSatisfiedBy(evidence));
+        Assert.False(ToolRequirement.AnyMcp().IsSatisfiedBy([new("get_inventory_levels", null)]));
     }
 
     [Fact]

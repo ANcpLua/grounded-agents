@@ -107,7 +107,7 @@ internal static class Selftest
 
         Check(ref failures, "grounded value without evidence => not constructible",
             () => Throws(() => _ = new Grounded<string>(
-                "answer", [], new SettledResponse("answer", [], []))));
+                "answer", [], new SettledResponse("answer", [], [], []))));
 
         Check(ref failures, "AllOf requirement with partial evidence => Ungrounded",
             () =>
@@ -115,6 +115,7 @@ internal static class Selftest
                 var settled = new SettledResponse(
                     "answer",
                     [new ToolCallEvidence("get_inventory_levels", null)],
+                    [],
                     []);
 
                 StageOutcome<string> outcome = Grounding.Require(
@@ -131,6 +132,7 @@ internal static class Selftest
                 var settled = new SettledResponse(
                     "answer",
                     [new ToolCallEvidence("some_local_function", null)],
+                    [],
                     []);
 
                 return Grounding.Require(settled, ToolRequirement.AnyMcp(), response => response.Text)
@@ -143,6 +145,7 @@ internal static class Selftest
                 var settled = new SettledResponse(
                     "answer",
                     [new ToolCallEvidence("search", "foundry-iq")],
+                    [],
                     []);
 
                 return Grounding.Require(settled, ToolRequirement.AnyMcp(), response => response.Text)

@@ -20,6 +20,26 @@ public abstract record ToolRequirement
     public static ToolRequirement AllTools(params string[] tools) => new AllOf(tools);
 
     public static ToolRequirement AnyMcp() => new AnyMcpCall();
+
+    /// <summary>
+    /// The one definition of "satisfied": <see cref="Grounding.Require{T}"/> applies it to a settled
+    /// response at runtime and <see cref="RequirementChecks"/> applies it to an evaluation transcript,
+    /// so the gate cannot drift from the boundary.
+    /// </summary>
+    public bool IsSatisfiedBy(IReadOnlyList<ToolCallEvidence> evidence) => this switch
+    {
+        AllOf(var tools) => tools.All(tool =>
+            evidence.Any(item => string.Equals(item.Tool, tool, StringComparison.OrdinalIgnoreCase))),
+        AnyMcpCall => evidence.Any(item => item.McpServer is not null),
+        _ => throw new InvalidOperationException("Unreachable: ToolRequirement union is closed."),
+    };
+
+    public string Describe() => this switch
+    {
+        AllOf(var tools) => $"all of {string.Join(", ", tools)}",
+        AnyMcpCall => "any MCP-server call",
+        _ => throw new InvalidOperationException("Unreachable: ToolRequirement union is closed."),
+    };
 }
 
 /// <summary>
@@ -72,15 +92,7 @@ public static class Grounding
         ToolRequirement requirement,
         Func<SettledResponse, T> project)
     {
-        bool satisfied = requirement switch
-        {
-            ToolRequirement.AllOf(var tools) => tools.All(tool =>
-                response.Evidence.Any(item => string.Equals(item.Tool, tool, StringComparison.OrdinalIgnoreCase))),
-            ToolRequirement.AnyMcpCall => response.Evidence.Any(item => item.McpServer is not null),
-            _ => throw new InvalidOperationException("Unreachable: ToolRequirement union is closed."),
-        };
-
-        return satisfied
+        return requirement.IsSatisfiedBy(response.Evidence)
             ? new StageOutcome<T>.Success(new Grounded<T>(project(response), response.Evidence, response))
             : new StageOutcome<T>.Ungrounded(response.Text, requirement);
     }

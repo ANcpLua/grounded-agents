@@ -186,6 +186,12 @@ public sealed class ApprovalPolicyTests
             Assert.Single(Assert.Single(sentBack).Contents));
         Assert.True(approval.Approved);
         Assert.Equal("approval-1", approval.RequestId);
+
+        // The transcript is the whole exchange in order: both first-round messages, the
+        // approval reply that was sent back, then the follow-up round.
+        Assert.Equal(
+            [first.Messages[0], first.Messages[1], sentBack[0], followUp.Messages[0]],
+            settled.Transcript);
     }
 
     [Fact]

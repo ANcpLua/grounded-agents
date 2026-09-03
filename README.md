@@ -51,7 +51,7 @@ type system rather than by convention.
 | [Hosted-FoundryIQ](Hosted-FoundryIQ/README.md) | Portal-managed Foundry agent with a Foundry IQ knowledge base (Azure AI Search), invoked from a C# console client | Step 1: agent with a knowledge source |
 | [Hosted-FoundryMcpTools](Hosted-FoundryMcpTools/README.md) | Agent with a remote hosted MCP tool (Microsoft Learn) and a local stdio MCP server exposing inventory tools | Step 1: agent with tools |
 | [Hosted-FoundryWorkflow](Hosted-FoundryWorkflow/README.md) | Both agents composed into one retail-ops workflow, with a typed handover boundary, OpenTelemetry tracing and an evaluation gate | Steps 1-3: multi-agent design, observability, evaluation, end-to-end workflow |
-| [Hosted-FoundryWorkflow.Tests](Hosted-FoundryWorkflow.Tests/) | 58 tests over the workflow domain types, with a coverage gate at 100% line coverage | Step 2.3: governance and reliability |
+| [Hosted-FoundryWorkflow.Tests](Hosted-FoundryWorkflow.Tests/) | 68 tests over the workflow domain types, with a coverage gate at 100% line coverage | Step 2.3: governance and reliability |
 
 The first two chapter READMEs are full lab guides, including the Microsoft Foundry portal setup.
 Work through them in order; the third chapter reuses the agent and the knowledge base created in
@@ -76,6 +76,8 @@ export AZURE_AI_MODEL_DEPLOYMENT_NAME="gpt-4.1"
 export AGENT_NAME="product-expert-agent"
 # optional: exports traces to Application Insights instead of the console
 export APPLICATIONINSIGHTS_CONNECTION_STRING="..."
+# on a developer machine: skip the managed-identity probe, use the CLI login directly
+export AZURE_TOKEN_CREDENTIALS=AzureCliCredential
 az login
 ```
 
@@ -125,6 +127,8 @@ fails when line coverage of the workflow assembly drops below 100%.
 │   ├── Workflow.cs                Stage sequencing and the workflow outcome union
 │   ├── Telemetry.cs               OpenTelemetry source and span enrichment
 │   ├── InventoryMcp.cs            The stdio inventory MCP server and its tools
+│   ├── SettledAgent.cs            An agent as the workflow runs it: settled under its approval policy
+│   ├── RequirementChecks.cs       The stage requirements as evaluation checks over a transcript
 │   ├── EvalGate.cs                The fail-closed evaluation gate
 │   └── Evaluation/                Vendored evaluation suite sources
 └── Hosted-FoundryWorkflow.Tests/  Domain tests for the workflow types

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="README.md" />
+    <File Path="GOAL.md" />
+  </Folder>
+  <Project Path="Hosted-FoundryIQ/HostedFoundryIQ.csproj" />
+  <Project Path="Hosted-FoundryMcpTools/HostedFoundryMcpTools.csproj" />
+  <Project Path="Hosted-FoundryWorkflow/HostedFoundryWorkflow.csproj" />
+  <Project Path="Hosted-FoundryWorkflow.Tests/HostedFoundryWorkflow.Tests.csproj" />
+</Solution>

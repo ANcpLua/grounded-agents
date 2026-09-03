@@ -11,7 +11,7 @@ public sealed class WorkflowOutcomeTests
     [Fact]
     public void Delivered_CarriesTheGroundedRecommendation()
     {
-        var origin = new SettledResponse("the answer", [new ToolCallEvidence("search", "foundry-iq")], []);
+        var origin = new SettledResponse("the answer", [new ToolCallEvidence("search", "foundry-iq")], [], []);
         var recommendation = new Grounded<string>("restock the moisturizer", origin.Evidence, origin);
 
         WorkflowOutcome outcome = new WorkflowOutcome.Delivered(recommendation);

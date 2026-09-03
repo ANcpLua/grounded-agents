@@ -13,7 +13,7 @@ public sealed class TelemetryTests
 {
     private static SettledResponse Settled(
         IReadOnlyList<ToolCallEvidence> evidence,
-        IReadOnlyList<ApprovalDecision> decisions) => new("the answer", evidence, decisions);
+        IReadOnlyList<ApprovalDecision> decisions) => new("the answer", evidence, decisions, []);
 
     private static Activity Record(Action<Activity?> record)
     {
