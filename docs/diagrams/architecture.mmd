@@ -1,0 +1,19 @@
+flowchart TD
+    Q["Kundenfrage<br/>CustomerQuery"] --> PE
+
+    subgraph Pipeline["RetailOpsWorkflow (ein Prozess, drei Stufen)"]
+        PE["ProductExpert<br/>Foundry-verwalteter Agent"]
+        IA["InventoryAnalyst<br/>modellgestützter Agent"]
+        CO["Consolidator<br/>reine Synthese, keine Tools"]
+        PE -- "Grounded&lt;ProductAdvice&gt;" --> IA
+        IA -- "Grounded&lt;InventoryFacts&gt;" --> CO
+    end
+
+    KB[("Foundry IQ Wissensbasis<br/>Azure AI Search, Contoso-Produkt-PDFs")] -. "knowledge_base_retrieve (MCP, mit Freigabe)" .-> PE
+    MCP["Inventar-MCP-Server (stdio)<br/>get_inventory_levels, get_weekly_sales"] -. "Tool-Aufrufe" .-> IA
+    CO --> OUT["WorkflowOutcome<br/>Delivered oder Stopped"]
+
+    OUT ~~~ OTEL
+    Pipeline -. "Spans mit Evidenz und<br/>Freigabeentscheidungen" .-> OTEL["OpenTelemetry<br/>Application Insights oder Konsole"]
+    GATE["Evaluierungs-Gate<br/>dotnet run -- eval"] -. "bewertet Stufen-Agenten" .-> PE
+    GATE -. "bewertet Stufen-Agenten" .-> IA

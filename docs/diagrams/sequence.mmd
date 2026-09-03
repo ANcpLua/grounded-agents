@@ -1,0 +1,32 @@
+sequenceDiagram
+    autonumber
+    participant U as Nutzer / Geschäftsprozess
+    participant W as RetailOpsWorkflow
+    participant PE as ProductExpert<br/>(Foundry-verwaltet)
+    participant KB as Foundry IQ<br/>Wissensbasis
+    participant IA as InventoryAnalyst
+    participant MCP as Inventar-MCP-Server<br/>(stdio)
+    participant CO as Consolidator
+
+    U->>W: CustomerQuery
+    W->>PE: RunAsync(query)
+    PE-->>W: Freigabeanfrage: knowledge-base/knowledge_base_retrieve
+    Note over W,PE: ApprovalPolicy.AllowAllMcp entscheidet,<br/>Entscheidung wird protokolliert
+    W->>PE: Freigabe erteilt
+    PE->>KB: knowledge_base_retrieve
+    KB-->>PE: Passagen mit Zitaten
+    PE-->>W: Antwort + McpServerToolCallContent
+    Note over W: Grounding.Require: AnyMcp erfüllt<br/>=> Grounded<ProductAdvice>
+
+    W->>IA: AssessAsync(Grounded<ProductAdvice>)
+    IA->>MCP: get_inventory_levels
+    MCP-->>IA: Bestände (JSON)
+    IA->>MCP: get_weekly_sales
+    MCP-->>IA: Wochenabsatz (JSON)
+    IA-->>W: Bewertung + FunctionCallContent x2
+    Note over W: Grounding.Require: AllTools erfüllt<br/>=> Grounded<InventoryFacts>
+
+    W->>CO: ConsolidateAsync(Grounded<ProductAdvice>, Grounded<InventoryFacts>)
+    Note over CO: DenyAll: jeder Tool-Aufruf wäre ein Fehler
+    CO-->>W: konsolidierte Empfehlung
+    W-->>U: WorkflowOutcome.Delivered + Evidenzliste, Exit 0

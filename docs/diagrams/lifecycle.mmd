@@ -1,0 +1,9 @@
+flowchart TD
+    A["selftest<br/>14 Guards, offline"] --> B["Unit-Tests<br/>68 Tests, 100 % Zeilenabdeckung"]
+    B --> C["Evaluierungs-Gate<br/>dotnet run -- eval<br/>Tool-Nutzung je Stufe, Fail-closed"]
+    C --> D["Live-Lauf<br/>Workflow, Exit 0 nur bei delivered"]
+    D --> E["Traces<br/>Application Insights"]
+    E --> F["Befund<br/>ungrounded, denied, Latenz"]
+    F --> G["Anpassung<br/>Instruktionen, Policy, Datensatz"]
+    G --> A
+    C -. "optional, AI_EVAL_FOUNDRY=1" .-> H["Foundry-Evaluatoren<br/>Relevanz, Fundiertheit, Kohärenz"]
