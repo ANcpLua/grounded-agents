@@ -1,7 +1,6 @@
 # Hosted-FoundryWorkflow
 
-This is the third chapter after [`Hosted-FoundryIQ`](../Hosted-FoundryIQ/README.md) and
-[`Hosted-FoundryMcpTools`](../Hosted-FoundryMcpTools/README.md). It composes both into one
+This project composes a Foundry IQ knowledge agent and an MCP tool agent into one
 multi-agent retail-ops workflow, and designs the Foundry boundary so that the illegal states
 of an agent pipeline are unrepresentable in the type system.
 
@@ -43,8 +42,8 @@ the console so runs are inspectable offline.
 
 ## Run
 
-Prerequisites are the previous two chapters: the `product-expert-agent` with its Foundry IQ
-knowledge base from `Hosted-FoundryIQ`, and a deployed chat model.
+The workflow requires a Foundry agent with a Foundry IQ knowledge base: the `product-expert-agent`,
+set up with [docs/foundry-iq-setup.md](../docs/foundry-iq-setup.md), and a deployed chat model.
 
 ```bash
 export AZURE_AI_PROJECT_ENDPOINT="https://<account>.services.ai.azure.com/api/projects/<project>"

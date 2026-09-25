@@ -331,7 +331,7 @@ Die Zahlen in der Empfehlung sind genau die Zahlen, die die beiden Tools geliefe
 
 Der Weg vom Prototyp zur produktionsreifen Architektur folgte den Kursthemen in ihrer Reihenfolge, aber jedes Thema hat die Lösung an einer konkreten Stelle verändert.
 
-**Agenten mit Wissensquellen und Tools** (Kapitel 1 und 2 des Repositorys) waren als Einzelanwendungen fertig, bevor der Workflow entstand. Der entscheidende Schritt war die Frage, was von einem Agenten zum nächsten übergeben wird. Die Antwort „ein Text“ war nicht ausreichend, weil ein Text nicht trägt, woher er kommt. Daraus entstand `Grounded<T>`.
+**Agenten mit Wissensquellen und Tools** waren als Einzelanwendungen fertig, bevor der Workflow entstand. Der entscheidende Schritt war die Frage, was von einem Agenten zum nächsten übergeben wird. Die Antwort „ein Text“ war nicht ausreichend, weil ein Text nicht trägt, woher er kommt. Daraus entstand `Grounded<T>`.
 
 **Beobachtbarkeit** hat die Attribute der Spans bestimmt. Die erste Version hatte nur Dauer und Namen. Erst die Frage „Was muss ich im Trace sehen, um einen Abbruch ohne Debugger zu verstehen?“ führte zu Evidenzliste, Freigabezählern und Urteil je Stufe.
 
@@ -350,9 +350,8 @@ Was bei einem Neuaufbau anders gemacht würde: Die Wissensbasis und der verwalte
 Quellcode: <https://github.com/ANcpLua/grounded-agents>
 
 ```text
-Hosted-FoundryIQ/              Kapitel 1: verwalteter Agent mit Foundry-IQ-Wissensbasis
-Hosted-FoundryMcpTools/        Kapitel 2: entferntes MCP-Tool und lokaler stdio-MCP-Server
-Hosted-FoundryWorkflow/        Kapitel 3: der Multi-Agenten-Workflow
+docs/foundry-iq-setup.md       Portal-Einrichtung von Agent und Foundry-IQ-Wissensbasis
+Hosted-FoundryWorkflow/        Der Multi-Agenten-Workflow
   Boundary.cs                  Typisierte Konfiguration, einmal am Prozessrand geparst
   Approvals.cs                 Abwicklung und die Freigaberegel (standardmäßig verweigert)
   Grounding.cs                 Grounded<T>, Nachweispflichten, Stufenergebnisse

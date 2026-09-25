@@ -6,8 +6,6 @@
     <File Path="README.md" />
     <File Path="GOAL.md" />
   </Folder>
-  <Project Path="Hosted-FoundryIQ/HostedFoundryIQ.csproj" />
-  <Project Path="Hosted-FoundryMcpTools/HostedFoundryMcpTools.csproj" />
   <Project Path="Hosted-FoundryWorkflow/HostedFoundryWorkflow.csproj" />
   <Project Path="Hosted-FoundryWorkflow.Tests/HostedFoundryWorkflow.Tests.csproj" />
 </Solution>

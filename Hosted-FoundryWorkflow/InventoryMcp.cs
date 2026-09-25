@@ -13,7 +13,7 @@ namespace HostedFoundryWorkflow;
 
 /// <summary>
 /// The stdio inventory MCP server hosted by this executable (spawned with --server),
-/// same mock data as the Hosted-FoundryMcpTools chapter.
+/// backed by a small mock inventory.
 /// </summary>
 [ExcludeFromCodeCoverage(Justification = "Hosts a stdio server that blocks until the transport closes.")]
 public static class InventoryMcpServer
