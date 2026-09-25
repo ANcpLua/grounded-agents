@@ -18,12 +18,12 @@ CustomerQuery
 | --- | --- |
 | Reading text out of a response with pending approvals | `SettledResponse` has no public constructor; the only producers are `Settlement.Classify` (which refuses while approvals are pending) and the `ApprovalPolicy.SettleAsync` loop that drives every request to a recorded decision. |
 | A "grounded" answer without retrieval proof | `Grounded<T>` is only produced by `Grounding.Require`, which demands that the tool-call evidence satisfies the stage's `ToolRequirement`; its constructor rejects empty evidence. |
-| Consolidating unproven claims | `ConsolidateAsync(Grounded<ProductAdvice>, Grounded<InventoryFacts>)` — the signature is the invariant. There is no overload taking raw strings. |
+| Consolidating unproven claims | `ConsolidateAsync(Grounded<ProductAdvice>, Grounded<InventoryFacts>)`, the signature is the invariant. There is no overload taking raw strings. |
 | Approving an unexpected tool call | `ApprovalPolicy` is a closed union (`AllowServers` / `AllowAllMcp` / `DenyAll`) that denies by default; every decision is recorded and exported as telemetry. |
 | Running half-configured | `FoundryBoundary.FromEnvironment` parses all configuration into typed values at the process edge; no other file reads an environment variable. |
 | Skipping a pipeline stage | The stage order is enforced by the types: each stage's input is the previous stage's grounded output. |
 
-By design, these are rejected — the first two at compile time, the last at the constructor:
+By design, these are rejected, the first two at compile time, the last at the constructor:
 
 ```csharp
 consolidator.ConsolidateAsync(adviceText, inventoryText);   // CS1503: strings are not Grounded<T>
@@ -69,7 +69,7 @@ dotnet run -- selftest
 ```
 
 Offline and credential-free: 14 checks drive every boundary guard into its illegal state and
-require it to reject — empty configuration, evidence-free grounding, partial tool evidence,
+require it to reject, empty configuration, evidence-free grounding, partial tool evidence,
 unlisted MCP servers, and pending approvals that must refuse to settle. The same guards are
 covered by the [test project](../Hosted-FoundryWorkflow.Tests/).
 

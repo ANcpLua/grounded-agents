@@ -411,7 +411,7 @@ selftest: all boundary guards fired correctly.
     [PASS] Is anything a candidate for clearance?
   -> inventory-analyst-gate: 2 passed, 0 failed, 0 errored of 2
 
-eval gate: green — every stage ran and every item passed.
+eval gate: green, every stage ran and every item passed.
 ```
 
 ## Testabdeckung
