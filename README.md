@@ -1,6 +1,5 @@
 # Multi-agent solution with Microsoft Foundry
 
-
 ![Coverage](coverage-badge.svg)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
